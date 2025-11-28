@@ -18,10 +18,6 @@ public class DemoController {
         this.employeeService = employeeService;
     }
 
-    @GetMapping("/")
-    public String index() {
-        return "dist/index.html";
-    }
     @GetMapping("/employees/{id}")
     public Employee findById(@PathVariable int id) {
         Employee employee = employeeService.findById(id);
