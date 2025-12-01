@@ -3,6 +3,7 @@ package com.tw.springboot.demosecurity.demosecurity.security;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -43,14 +44,24 @@ public class DemoSecurityConfig {
                 }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/employees/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/employees").hasRole("EMPLOYEE")
+                        .requestMatchers(HttpMethod.GET, "/api/employees/**").hasRole("EMPLOYEE")
+                        .requestMatchers(HttpMethod.POST, "/api/employees").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/employees").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/employees/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/employees/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, ex2) -> {
                             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             res.setContentType("application/json");
-                            res.getWriter().write("{\"error\":\"Unauthorized\"}");
+                            res.getWriter().write("{\"error\":\"Unauthorized - invalid or expired token\"}");
+                        })
+                        .accessDeniedHandler((req, res, ex2) -> {
+                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"error\":\"Forbidden - insufficient permissions\"}");
                         })
                 )
                 .formLogin(form -> form
